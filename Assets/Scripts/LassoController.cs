@@ -19,7 +19,7 @@ public class Lasso : MonoBehaviour
     [SerializeField] private GameObject lassoVisual;    // Визуал лассо в левой руке
 
     private Camera playerCamera;
-    private GameObject currentGrabbedObject;
+    public static GameObject currentGrabbedObject;
     private Rigidbody grabbedRigidbody;
     private bool isPulling = false;
     private bool isSwapping = false;    // Идёт перекладывание?
@@ -27,6 +27,7 @@ public class Lasso : MonoBehaviour
     private Vector3 originalScale;
     private Vector3 swapStartPosition;
     private float swapProgress = 0f;
+    public  static bool isInHandKey = false;
 
     void Start()
     {
@@ -175,6 +176,7 @@ public class Lasso : MonoBehaviour
         if (distance < handSwapDistance)
         {
             StartSwapToRightHand();
+
             return;
         }
 
@@ -271,6 +273,11 @@ public class Lasso : MonoBehaviour
             Vector3.zero,
             Time.deltaTime * 10f
         );
+        if (currentGrabbedObject.name == "Battery")
+        {
+            isInHandKey = true;
+            Debug.Log(isInHandKey);
+        }
         currentGrabbedObject.transform.localRotation = Quaternion.Lerp(
             currentGrabbedObject.transform.localRotation,
             Quaternion.identity,
@@ -292,6 +299,11 @@ public class Lasso : MonoBehaviour
                 grabbedRigidbody.useGravity = true;
                 grabbedRigidbody.freezeRotation = false;
                 grabbedRigidbody.velocity = Vector3.zero;
+                if (currentGrabbedObject.name == "Battery")
+                {
+                    isInHandKey = true;
+                    Debug.Log(isInHandKey);
+                }
             }
         }
 
