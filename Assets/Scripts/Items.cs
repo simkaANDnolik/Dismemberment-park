@@ -4,28 +4,25 @@ using UnityEngine.UI;
 public class PlayerInteraction : MonoBehaviour
 {
     [Header("Настройки взаимодействия")]
-    public float interactRange = 2f;          // Радиус для поиска предметов
-    public Transform holdPoint;               // Точка, куда будет крепиться предмет (например, пустой GameObject у руки)
-    public KeyCode interactKey = KeyCode.E;   // Клавиша для взятия
+    public float interactRange = 2f;
+    public Transform holdPoint;
+    public KeyCode interactKey = KeyCode.E;
 
     [Header("UI подсказка")]
-    public GameObject hintPanel;              // Панель с подсказкой (Text или целый объект)
-    public Text hintText;                     // Текст подсказки (если используешь Text)
+    public GameObject hintPanel;
+    public Text hintText;
 
-    private InteractableItem currentItem;     // Предмет, на который смотрим
-    private GameObject heldItem = null;        // Предмет в руке
+    private InteractableItem currentItem;
+    private GameObject heldItem = null;
 
     void Update()
     {
-        // Поиск ближайшего интерактивного предмета в радиусе
         FindNearestInteractable();
 
-        // Показываем подсказку, если есть предмет рядом
         if (currentItem != null)
         {
             ShowHint($"E - взять {currentItem.itemName}");
 
-            // Если нажали E и предмет ещё не в руке
             if (Input.GetKeyDown(interactKey) && heldItem == null)
             {
                 PickUpItem(currentItem);
@@ -36,7 +33,6 @@ public class PlayerInteraction : MonoBehaviour
             HideHint();
         }
 
-        // Доп. логика: выбросить предмет (нажми G)
         if (Input.GetKeyDown(KeyCode.G) && heldItem != null)
         {
             DropItem();
@@ -45,18 +41,19 @@ public class PlayerInteraction : MonoBehaviour
 
     void FindNearestInteractable()
     {
-        // Находим все предметы с компонентом InteractableItem
         InteractableItem[] items = FindObjectsOfType<InteractableItem>();
         InteractableItem nearest = null;
-        float minDistance = interactRange;
+        float minDistance = Mathf.Infinity;
 
         foreach (InteractableItem item in items)
         {
-            // Если предмет уже в руке - пропускаем (не показываем подсказку)
-            if (item.isHeld) continue;
+            if (item == null) continue;
+            if (item.isHeldByPlayer) continue;
+            if (item.isHeldByLasso) continue;
+            if (item.IsPickupBlocked()) continue;
 
             float dist = Vector3.Distance(transform.position, item.transform.position);
-            if (dist < minDistance)
+            if (dist < minDistance && dist <= interactRange)
             {
                 minDistance = dist;
                 nearest = item;
@@ -68,15 +65,16 @@ public class PlayerInteraction : MonoBehaviour
 
     void PickUpItem(InteractableItem item)
     {
-        if (item == null || item.isHeld) return;
+        if (item == null) return;
+        if (item.isHeldByPlayer) return;
+        if (item.isHeldByLasso) return;
 
-        // Запоминаем, что предмет взят
         item.PickUp(holdPoint);
         heldItem = item.gameObject;
-        currentItem = null; // Скрываем подсказку сразу
+        currentItem = null;
         HideHint();
 
-        Debug.Log($"Взят предмет: {item.itemName}");
+        Debug.Log($"Взят предмет (E): {item.itemName}");
     }
 
     void DropItem()
@@ -84,7 +82,7 @@ public class PlayerInteraction : MonoBehaviour
         if (heldItem == null) return;
 
         InteractableItem item = heldItem.GetComponent<InteractableItem>();
-        if (item != null)
+        if (item != null && item.isHeldByPlayer)
         {
             item.Drop();
             heldItem = null;
@@ -107,7 +105,6 @@ public class PlayerInteraction : MonoBehaviour
             hintPanel.SetActive(false);
     }
 
-    // Рисуем в редакторе радиус для наглядности
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;

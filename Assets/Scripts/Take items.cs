@@ -4,38 +4,39 @@ public class InteractableItem : MonoBehaviour
 {
     [Header("Информация о предмете")]
     public string itemName = "Предмет";
-    public bool isHeld = false;      // В руке ли сейчас предмет
+    public bool isHeldByPlayer = false;
+    public bool isHeldByLasso = false;
 
     private Transform originalParent;
     private Vector3 originalPosition;
     private Quaternion originalRotation;
-    private Vector3 originalScale;    // Добавляем сохранение исходного масштаба
+    private Vector3 originalScale;
     private Rigidbody rb;
     private Collider itemCollider;
 
+    private bool isPickupBlocked = false;
+
     void Start()
     {
-        // Сохраняем начальное состояние
         originalParent = transform.parent;
-        originalPosition = transform.position;
-        originalRotation = transform.rotation;
-        originalScale = transform.localScale;  // Сохраняем локальный масштаб
+        originalPosition = transform.localPosition;
+        originalRotation = transform.localRotation;
+        originalScale = transform.localScale;
 
         rb = GetComponent<Rigidbody>();
         itemCollider = GetComponent<Collider>();
 
-        // Если нет Rigidbody - добавляем (для физики)
         if (rb == null)
             rb = gameObject.AddComponent<Rigidbody>();
     }
 
     public void PickUp(Transform holdPoint)
     {
-        if (isHeld) return;  // Предотвращаем повторный подбор
+        if (isHeldByLasso || isPickupBlocked) return;
+        if (isHeldByPlayer) return;
 
-        isHeld = true;
+        isHeldByPlayer = true;
 
-        // Отключаем физику и коллайдер
         if (rb != null)
         {
             rb.isKinematic = true;
@@ -47,92 +48,93 @@ public class InteractableItem : MonoBehaviour
         if (itemCollider != null)
             itemCollider.enabled = false;
 
-        // Сохраняем позицию/поворот в мировых координатах
-        Vector3 worldPosition = transform.position;
-        Quaternion worldRotation = transform.rotation;
+        // Сохраняем МИРОВОЙ масштаб до смены родителя
+        Vector3 worldScale = transform.lossyScale;
 
-        // Крепим к точке руки
-        transform.SetParent(holdPoint, true);  // true - сохраняет мировое положение
+        transform.SetParent(holdPoint, false);
 
-        // Сбрасываем локальные трансформации
+        // Пересчитываем локальный масштаб, чтобы сохранить мировой
+        transform.localScale = new Vector3(
+            worldScale.x / holdPoint.lossyScale.x,
+            worldScale.y / holdPoint.lossyScale.y,
+            worldScale.z / holdPoint.lossyScale.z
+        );
+
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.identity;
 
-        // Важно: восстанавливаем исходный локальный масштаб предмета
-        transform.localScale = originalScale;
+        // Дополнительная страховка - принудительно замораживаем масштаб через 1 кадр
+        StartCoroutine(FreezeScale());
 
-        if (Lasso.currentGrabbedObject != null && Lasso.currentGrabbedObject.name == "Battery")
-        {
-            Lasso.isInHandKey = true;
-            Debug.Log(Lasso.isInHandKey);
-        }
+        Debug.Log($"Обычный пикап: {itemName}");
+    }
+
+    // Добавьте этот метод в конец класса InteractableItem
+    private System.Collections.IEnumerator FreezeScale()
+    {
+        Vector3 fixedScale = transform.localScale;
+        yield return null; // ждем один кадр
+        transform.localScale = fixedScale;
     }
 
     public void Drop()
     {
-        if (!isHeld) return;  // Предотвращаем повторный бросок
+        if (!isHeldByPlayer) return;
 
-        isHeld = false;
+        isHeldByPlayer = false;
 
-        // Сохраняем мировую позицию перед откреплением
         Vector3 worldPosition = transform.position;
+        Quaternion worldRotation = transform.rotation;
 
-        // Открепляем от руки, сохраняя мировую позицию
         transform.SetParent(null, true);
+        transform.position = worldPosition;
+        transform.rotation = worldRotation;
 
-        // Возвращаем физику
         if (rb != null)
         {
             rb.isKinematic = false;
             rb.useGravity = true;
+            rb.velocity = Vector3.zero;
 
-            // Добавляем небольшую задержку перед применением скорости
-            StartCoroutine(ApplyDropVelocity());
+            if (Camera.main != null)
+            {
+                rb.AddForce(Camera.main.transform.forward * 3f + Vector3.up * 2f, ForceMode.Impulse);
+            }
         }
 
         if (itemCollider != null)
             itemCollider.enabled = true;
-
-        if (Lasso.currentGrabbedObject != null && Lasso.currentGrabbedObject.name == "Battery")
-        {
-            Lasso.isInHandKey = false;
-            Debug.Log(Lasso.isInHandKey);
-        }
     }
 
-    private System.Collections.IEnumerator ApplyDropVelocity()
+    public void BlockPickup()
     {
-        // Ждём один кадр, чтобы физика успела инициализироваться
-        yield return null;
-
-        if (rb != null && Camera.main != null)
-        {
-            rb.velocity = Camera.main.transform.forward * 3f + Vector3.up * 2f;
-            // Добавляем небольшой случайный момент вращения для реализма
-            rb.angularVelocity = new Vector3(
-                Random.Range(-1f, 1f),
-                Random.Range(-1f, 1f),
-                Random.Range(-1f, 1f)
-            );
-        }
+        isPickupBlocked = true;
     }
 
-    // Метод для сброса предмета на место (если нужно)
+    public void UnblockPickup()
+    {
+        isPickupBlocked = false;
+    }
+
+    public bool IsPickupBlocked()
+    {
+        return isPickupBlocked;
+    }
+
     public void ResetPosition()
     {
-        if (!isHeld)
+        if (!isHeldByPlayer && !isHeldByLasso)
         {
-            transform.SetParent(originalParent, false);  // false - не сохранять мировое положение
+            transform.SetParent(originalParent, false);
             transform.localPosition = originalPosition;
             transform.localRotation = originalRotation;
-            transform.localScale = originalScale;  // Восстанавливаем исходный масштаб
+            transform.localScale = originalScale;
 
             if (rb != null)
             {
                 rb.isKinematic = false;
                 rb.useGravity = true;
                 rb.velocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
             }
 
             if (itemCollider != null)
@@ -140,11 +142,10 @@ public class InteractableItem : MonoBehaviour
         }
     }
 
-    // Опционально: метод для принудительного обновления исходной позиции
     public void UpdateOriginalTransform()
     {
         originalParent = transform.parent;
-        originalPosition = transform.localPosition;  // Теперь сохраняем локальную позицию
+        originalPosition = transform.localPosition;
         originalRotation = transform.localRotation;
         originalScale = transform.localScale;
     }
