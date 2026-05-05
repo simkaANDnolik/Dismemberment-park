@@ -663,7 +663,7 @@ GameObject:
   - component: {fileID: 523658152}
   - component: {fileID: 523658151}
   m_Layer: 0
-  m_Name: Cube (16)
+  m_Name: Door
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1577,7 +1577,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   itemName: Salad
-  isHeld: 0
+  isHeldByPlayer: 0
+  isHeldByLasso: 0
 --- !u!65 &736435573
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2487,6 +2488,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1070987368
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1070987369}
+  m_Layer: 0
+  m_Name: Start
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1070987369
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1070987368}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -14.885404, y: 0.3, z: 1.97}
+  m_LocalScale: {x: 2.3226132, y: 4.6850486, z: 0.46081}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1182305053
 GameObject:
   m_ObjectHideFlags: 0
@@ -2898,9 +2930,10 @@ GameObject:
   - component: {fileID: 1450020119}
   - component: {fileID: 1450020125}
   - component: {fileID: 1450020126}
+  - component: {fileID: 1450020127}
   m_Layer: 0
   m_Name: Capsule
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3053,6 +3086,23 @@ MonoBehaviour:
   vertical: 0
   horizontal: 0
   playerCamera: {fileID: 963194227}
+--- !u!114 &1450020127
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1450020118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dfd27b2d99eec7f4186c399cc6c22acf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  door1: {fileID: 523658150}
+  start: {fileID: 1070987369}
+  end: {fileID: 1749285305}
+  keyObject: {fileID: 1697734697}
+  insertPoint: {fileID: 306499911}
 --- !u!1 &1484144920
 GameObject:
   m_ObjectHideFlags: 0
@@ -3067,7 +3117,7 @@ GameObject:
   - component: {fileID: 1484144921}
   m_Layer: 0
   m_Name: Cube (17)
-  m_TagString: Untagged
+  m_TagString: Space
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3087,7 +3137,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -3370,7 +3420,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   itemName: Lasso
-  isHeld: 0
+  isHeldByPlayer: 0
+  isHeldByLasso: 0
 --- !u!54 &1635020898
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -3585,7 +3636,7 @@ Transform:
   m_GameObject: {fileID: 1697734697}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.28, y: -0.31, z: -8.03}
+  m_LocalPosition: {x: -2.29, y: -0.34, z: -8.03}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3604,7 +3655,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   itemName: Battery
-  isHeld: 0
+  isHeldByPlayer: 0
+  isHeldByLasso: 0
 --- !u!54 &1697734703
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -3737,6 +3789,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1738776072}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1749285304
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1749285305}
+  m_Layer: 0
+  m_Name: Final
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1749285305
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1749285304}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -14.885404, y: 9.66, z: 1.97}
+  m_LocalScale: {x: 2.3226132, y: 4.6850486, z: 0.46081}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1914882333
 GameObject:
   m_ObjectHideFlags: 0
@@ -4145,3 +4228,5 @@ SceneRoots:
   - {fileID: 306499911}
   - {fileID: 1914882334}
   - {fileID: 1484144924}
+  - {fileID: 1070987369}
+  - {fileID: 1749285305}

@@ -250,6 +250,8 @@ public class Lasso : MonoBehaviour
             Time.deltaTime * 10f
         );
 
+        // ДОБАВЛЕННАЯ СТРОКА:
+        // Проверяем, является ли предмет батарейкой/ключом
         if (currentGrabbedObject != null && currentGrabbedObject.name == "Battery")
         {
             isInHandKey = true;
@@ -262,6 +264,39 @@ public class Lasso : MonoBehaviour
         );
     }
 
+    // НОВЫЙ МЕТОД: принудительно очищает ключ из рук
+    // В скрипте Lasso, обновите метод ClearKey:
+    public void ClearKey()
+    {
+        Debug.Log("Принудительная очистка ключа из рук");
+
+        if (currentGrabbedObject != null)
+        {
+            // Отвязываем от руки
+            currentGrabbedObject.transform.parent = null;
+
+            // Отключаем компоненты
+            if (grabbedRigidbody != null)
+            {
+                grabbedRigidbody.isKinematic = true;
+                grabbedRigidbody.useGravity = false;
+                grabbedRigidbody.velocity = Vector3.zero;
+                grabbedRigidbody.angularVelocity = Vector3.zero;
+            }
+
+            // Очищаем ссылки
+            currentGrabbedObject = null;
+            grabbedRigidbody = null;
+        }
+
+        isHolding = false;
+        isSwapping = false;
+        isPulling = false;
+        isInHandKey = false;
+
+        if (lineRenderer != null)
+            lineRenderer.enabled = false;
+    }
     public void DropFromHand()
     {
         Debug.Log("Предмет выпущен из правой руки (лассо)");
