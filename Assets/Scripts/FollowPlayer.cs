@@ -25,6 +25,7 @@ public class FollowPlayer : MonoBehaviour
     {
         if (Vector3.Distance(transform.position, player.position) <= 10 && Vector3.Distance(transform.position, player.position) > 3)
         {
+            agent.isStopped = false;
             agent.SetDestination(player.position);
             animator.SetBool("Walk", true);
         }
@@ -36,14 +37,17 @@ public class FollowPlayer : MonoBehaviour
         }
         else
         {
+            agent.isStopped = false;
             animator.SetBool("Walk", true);
             changeDirectionTimer -= Time.deltaTime;
             if (changeDirectionTimer <= 0f)
             {
                 ChageDirection();
             }
+            agent.isStopped = false;
             animator.SetBool("Walk", true);
             agent.SetDestination(transform.position + randomDirection);
+            agent.isStopped = false;
             animator.SetBool("Walk", true);
         }
     }

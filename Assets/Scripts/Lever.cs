@@ -8,6 +8,7 @@ public class Lever : MonoBehaviour
     [SerializeField] private float switchCooldown = 0.5f;
     [SerializeField] private AudioClip switchSound;
     [SerializeField] private float soundVolume = 1f;
+    [SerializeField] private bool oneTimeUse = true; // Рычаг можно использовать только раз
 
     [Header("Визуализация")]
     [SerializeField] private Transform leverHandle;
@@ -26,14 +27,30 @@ public class Lever : MonoBehaviour
 
     private bool isActive;
     private bool canInteract = true;
+    private bool isUsed = false; // Флаг, использован ли рычаг
     private AudioSource audioSource;
+
+    // Статический счетчик открытых рычагов (общий для всех рычагов)
+    public static int openedLeversCount = 0;
 
     // Свойство для проверки состояния рычага
     public bool IsActive => isActive;
+    public bool IsUsed => isUsed;
+
+    // Свойство для получения количества открытых рычагов
+    public static int OpenedLeversCount => openedLeversCount;
 
     void Start()
     {
         isActive = startState;
+
+        // Если рычаг уже активен с самого начала, учитываем его
+        if (isActive && oneTimeUse && !isUsed)
+        {
+            isUsed = true;
+            openedLeversCount++;
+            Debug.Log($"Рычаг {gameObject.name} уже активен. Всего открыто рычагов: {openedLeversCount}");
+        }
 
         // Настройка AudioSource
         audioSource = GetComponent<AudioSource>();
@@ -66,37 +83,93 @@ public class Lever : MonoBehaviour
     // Метод для переключения рычага (вызывается из лассо или при нажатии)
     public void ToggleLever()
     {
+        // Проверяем, можно ли взаимодействовать
         if (!canInteract) return;
 
-        isActive = !isActive;
-        Debug.Log($"Рычаг {gameObject.name} переключен в положение: {(isActive ? "ВКЛ" : "ВЫКЛ")}");
-
-        // Воспроизводим звук
-        if (audioSource != null && switchSound != null)
+        // Если рычаг одноразовый и уже использован - не даем активировать
+        if (oneTimeUse && isUsed)
         {
-            audioSource.PlayOneShot(switchSound, soundVolume);
+            Debug.Log($"Рычаг {gameObject.name} уже использован и не может быть активирован снова");
+            return;
         }
 
-        // Активируем/деактивируем объекты
-        foreach (GameObject obj in objectsToToggle)
+        // Если рычаг одноразовый и он НЕ в активном состоянии - активируем
+        if (oneTimeUse && !isActive)
         {
-            if (obj != null)
+            isActive = true;
+            isUsed = true;
+
+            // Увеличиваем счетчик открытых рычагов
+            openedLeversCount++;
+            Debug.Log($"Рычаг {gameObject.name} активирован! Всего открыто рычагов: {openedLeversCount}");
+
+            // Воспроизводим звук
+            if (audioSource != null && switchSound != null)
             {
-                obj.SetActive(isActive);
+                audioSource.PlayOneShot(switchSound, soundVolume);
             }
-        }
 
-        // Включаем/выключаем скрипты
-        foreach (MonoBehaviour script in scriptsToToggle)
-        {
-            if (script != null)
+            // Активируем объекты
+            foreach (GameObject obj in objectsToToggle)
             {
-                script.enabled = isActive;
+                if (obj != null)
+                {
+                    obj.SetActive(isActive);
+                }
             }
-        }
 
-        // Запускаем кулдаун
-        StartCoroutine(InteractCooldown());
+            // Включаем скрипты
+            foreach (MonoBehaviour script in scriptsToToggle)
+            {
+                if (script != null)
+                {
+                    script.enabled = isActive;
+                }
+            }
+
+            // Запускаем кулдаун
+            StartCoroutine(InteractCooldown());
+        }
+        // Если рычаг не одноразовый - работаем как раньше
+        else if (!oneTimeUse)
+        {
+            isActive = !isActive;
+            Debug.Log($"Рычаг {gameObject.name} переключен в положение: {(isActive ? "ВКЛ" : "ВЫКЛ")}");
+
+            // Воспроизводим звук
+            if (audioSource != null && switchSound != null)
+            {
+                audioSource.PlayOneShot(switchSound, soundVolume);
+            }
+
+            // Активируем/деактивируем объекты
+            foreach (GameObject obj in objectsToToggle)
+            {
+                if (obj != null)
+                {
+                    obj.SetActive(isActive);
+                }
+            }
+
+            // Включаем/выключаем скрипты
+            foreach (MonoBehaviour script in scriptsToToggle)
+            {
+                if (script != null)
+                {
+                    script.enabled = isActive;
+                }
+            }
+
+            // Запускаем кулдаун
+            StartCoroutine(InteractCooldown());
+        }
+    }
+
+    // Метод для сброса статического счетчика (например, при перезагрузке уровня)
+    public static void ResetOpenedLeversCount()
+    {
+        openedLeversCount = 0;
+        Debug.Log("Счетчик открытых рычагов сброшен");
     }
 
     // Альтернативный метод для совместимости
@@ -115,6 +188,9 @@ public class Lever : MonoBehaviour
     // Подсветка при наведении (опционально)
     public void Highlight()
     {
+        // Не подсвечиваем использованные рычаги
+        if (oneTimeUse && isUsed) return;
+
         if (leverRenderer != null && highlightMaterial != null)
         {
             leverRenderer.material = highlightMaterial;
